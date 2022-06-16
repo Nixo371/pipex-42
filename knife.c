@@ -61,6 +61,7 @@ void	parent(int fd, char * const *command, char **env)
 {
 	int	i;
 	int	tube[2];
+	int	status;
 	char	*cmd_path;
 	char	**the_paths;
 

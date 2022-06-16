@@ -11,11 +11,29 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 
-int	last_arg(char	**args);
-void	pipex(int fd1, int fd2, char **arguments, char **env);
-void	child(int fd, char * const *command, char **env);
-void	parent(int fd, char * const * command, char **env);
-char	*ft_join(char *s1, char *s2, char c);
-char	*find_str(char **ptr, char *crit);
+typedef struct s_pipex
+{
+	int	tube[2];
+	int	fd1;
+	int	fd2;
+	int	pid1;
+	int	pid2;
+	char	*path;
+	char	**all_paths;
+	char	**split_cmd;
+	char	**environment;
+}	t_pipex;
+
+void	ft_pipex(t_pipex pipex, char **argv);
+void	parent(t_pipex pipex, char *cmd);
+void	child(t_pipex pipex, char *cmd);
+
+char	*string_finder(char **ptr, char *str);
+char	*ft_join(char *s1, char *s2);
+char	**ft_joinall(char **ptr, char *s2);
+char	**ft_freeall(char **ptr, int i);
+
+char	**ft_split(char const *s, char c);
+size_t	ft_strlen(const char *str);
 
 #endif
