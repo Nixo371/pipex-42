@@ -94,11 +94,10 @@ char	*string_finder(char **ptr, char *str)
 		}
 		if (!str[j])
 		{
-			printf("should make it here...\n");
 			while(ptr[i][j])
 				j++;
 			ptr[i][j] = 0;
-			printf("ptr[i]: \"%s\"\n", ptr[i]);
+			printf("path: \"%s\"\n", ptr[i]);
 			return (ptr[i]);
 		}
 		else
@@ -134,25 +133,33 @@ void	child(t_pipex pipex, char *cmd)
 	char	*temp_path;
 
 	i = 0;
-	dup2(pipex.fd1, 1);
-	dup2(pipex.tube[1], 0);
-
+	printf("Child: made it to my function\n");
+	printf("Child: fd1 = %d\n", pipex.fd1);
+	printf("Child: tube[1] = %d\n", pipex.tube[1]);
+	dup2(pipex.tube[1], STDOUT_FILENO);
 	close(pipex.tube[0]);
+	printf("Child: First dup2 worked\n");
+	dup2(pipex.fd1, 0);
+	printf("Child: Second dup2 worked\n");
+
 	pipex.split_cmd = ft_split(cmd, ' ');
 	while (pipex.all_paths[i])
 	{		
 		temp_path = ft_join(pipex.all_paths[i], pipex.split_cmd[0]);
 		if(access(temp_path, F_OK | X_OK) == 0)
 		{
+			printf("Child: access success\n");
 			err = execve(temp_path, &pipex.split_cmd[1], pipex.environment);
 			if (err == -1)
 			{
+				printf("Child: error...\n");
 				free(temp_path);
 				perror("child execve");
 			}
 		}
 		i++;
 	}
+	printf("Child: closing pipe...\n");
 	close(pipex.tube[1]);
 
 }
@@ -188,8 +195,12 @@ void	parent(t_pipex pipex, char *cmd)
 
 	i = 0;
 	//TODO waitpid
+	printf("Parent: made it to my function\n");
+	printf("Parent: fd2 = %d\n", pipex.fd2);
 	dup2(pipex.tube[0], 1);
+	printf("Parent: first dup2 worked\n");
 	dup2(pipex.fd2, 0);
+	printf("Parent: second dup2 worked\n");
 
 	close(pipex.tube[1]);
 	pipex.split_cmd = ft_split(cmd, ' ');
@@ -198,14 +209,17 @@ void	parent(t_pipex pipex, char *cmd)
 		temp_path = ft_join(pipex.all_paths[i], pipex.split_cmd[0]);
 		if (access(temp_path, F_OK | X_OK) == 0)
 		{
+			printf("Parent: access success\n");
 			err = execve(temp_path, &pipex.split_cmd[1], pipex.environment);
 			if (err == -1)
 			{
+				printf("Parent: error...\n");
 				free(temp_path);
 				perror("parent execve");
 			}
 		}
 	}
+	printf("Parent: closing pipe...\n");
 	close(pipex.tube[0]);
 }
 
@@ -269,7 +283,8 @@ int main(int argc, char **argv, char **envp)
 		//printf("infile	command1	command2	outfile\n");
 		return (0);
 	}
-	pipe(pipex.tube);
+	if (pipe(pipex.tube) < 0)
+		perror("Pipe");
 	pipex.path = (string_finder(envp, "PATH=") + 5);
 	pipex.all_paths = ft_joinall(ft_split(pipex.path, ':'), "/");
 	pipex.fd1 = open(argv[1], O_RDONLY);
